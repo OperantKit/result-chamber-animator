@@ -1,0 +1,19 @@
+.venv/
+.venv-fresh/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.local/
+PLAN.md
+tmp
+
+# Demo session videos — generated locally by docs/examples/demo_session.py
+docs/assets/demo.mp4
+docs/assets/demo_strict.mp4
