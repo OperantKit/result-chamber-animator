@@ -17,3 +17,6 @@ tmp
 # Demo session videos — generated locally by docs/examples/demo_session.py
 docs/assets/demo.mp4
 docs/assets/demo_strict.mp4
+
+# uv is project-wide banned (behavior/CLAUDE.md, operantkit/CLAUDE.md)
+uv.lock
