@@ -19,8 +19,20 @@ __all__ = [
 ]
 
 
-SubjectStyle = Literal["sphere", "rat", "pigeon"]
-_VALID_STYLES: tuple[SubjectStyle, ...] = ("sphere", "rat", "pigeon")
+SubjectStyle = Literal[
+    "sphere",
+    "rat",
+    "pigeon",
+    "rat_billboard",
+    "pigeon_billboard",
+]
+_VALID_STYLES: tuple[SubjectStyle, ...] = (
+    "sphere",
+    "rat",
+    "pigeon",
+    "rat_billboard",
+    "pigeon_billboard",
+)
 
 
 @dataclass(frozen=True)

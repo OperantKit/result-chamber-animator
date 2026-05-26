@@ -545,17 +545,24 @@ def render_frame(
     *,
     chamber: Chamber | None = None,
     ax: Any | None = None,
+    subject_assets_dir: Path | None = None,
 ) -> Any:
     """Render a single :class:`StepFrame` onto a 3D axes.
 
     Returns the matplotlib axes used. Intended for static figures and as
     the per-frame callback for recorded-only animations. Uses the
     chamber's ``subject_style`` to draw the subject.
+
+    ``subject_assets_dir`` is forwarded to
+    :func:`~result_chamber_animator.subject.draw_subject` and is required
+    when the chamber's ``subject_style`` is a ``*_billboard`` variant.
     """
     if chamber is None:
         chamber = default_two_lever_chamber()
     spec = _spec_for_recorded(chamber, frame)
-    return _render_spec(spec, chamber=chamber, ax=ax)
+    return _render_spec(
+        spec, chamber=chamber, ax=ax, subject_assets_dir=subject_assets_dir
+    )
 
 
 def _render_spec(
@@ -563,6 +570,7 @@ def _render_spec(
     *,
     chamber: Chamber,
     ax: Any | None,
+    subject_assets_dir: Path | None = None,
 ) -> Any:
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
@@ -578,7 +586,12 @@ def _render_spec(
     flash = spec.base.is_reinforced and not spec.is_filler
     _draw_hopper(ax, chamber, flash=flash)
     draw_subject(
-        ax, chamber, spec.position, spec.facing, scale_pulse=spec.scale_pulse
+        ax,
+        chamber,
+        spec.position,
+        spec.facing,
+        scale_pulse=spec.scale_pulse,
+        subject_assets_dir=subject_assets_dir,
     )
 
     lx, ly, lz = chamber.size
@@ -616,8 +629,8 @@ def animate(
     *,
     chamber: Chamber | None = None,
     output_path: str | Path | None = None,
-    interval_ms: int = 200,
-    fps: int = 5,
+    interval_ms: int = 100,
+    fps: int = 10,
     inject_inter_event_behavior: bool = False,
     filler_density_per_s: float = 0.5,
     long_gap_threshold_s: float = 2.0,
@@ -626,6 +639,7 @@ def animate(
     terminal_window_s: float = 1.5,
     jitter_amplitude: float = 0.005,
     seed: int | None = None,
+    subject_assets_dir: Path | None = None,
 ) -> Any:
     """Build a matplotlib :class:`FuncAnimation` over a sequence of frames.
 
@@ -710,7 +724,9 @@ def animate(
     ax = fig.add_subplot(111, projection="3d")
 
     def _update(i: int) -> Any:
-        _render_spec(specs[i], chamber=chamber, ax=ax)
+        _render_spec(
+            specs[i], chamber=chamber, ax=ax, subject_assets_dir=subject_assets_dir
+        )
         return [ax]
 
     anim = FuncAnimation(
