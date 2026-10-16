@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+title: "result-chamber-animator"
+authors:
+  - name: "OperantKit contributors"
+repository-code: "https://github.com/OperantKit/result-chamber-animator"
+license: MIT
+abstract: "3D animation of recorded operant-chamber sessions. Consumes a CSV / JSONL session recording (step, chosen_response, is_reinforced columns) and renders chamber + agent + reinforcement events as PNG / MP4 / GIF."
