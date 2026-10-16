@@ -1,0 +1,39 @@
+# result-chamber-animator
+
+> Renders a recorded operant session as a 3D operant-chamber animation (PNG, GIF, or MP4): the subject moves to the operandum pressed on each step and the food hopper lights on reinforcement; reads CSV, JSONL, or OKL v1 recordings.
+
+result-chamber-animator is part of OperantKit, a set of Python/Rust packages for designing and running operant and respondent conditioning experiments (reinforcement schedules, session recording, analysis). Use it to show what happened in a recorded session, for teaching or presentations. It does not run sessions; by default it draws one frame per recorded event, and any synthesized between-event behavior is opt-in and labeled.
+
+## Install
+
+```bash
+pip install git+https://github.com/OperantKit/result-chamber-animator
+```
+
+## Minimal example
+
+```python
+import matplotlib
+
+matplotlib.use("Agg")
+import pandas as pd
+from result_chamber_animator import animate, steps_from_dataframe
+
+rows = pd.DataFrame({"step": [0, 1, 2], "chosen_response": ["lever_left", "lever_right", "lever_left"],
+                     "is_reinforced": [False, True, False]})
+animate(steps_from_dataframe(rows, dt=1.0), output_path="session.gif", fps=2)
+```
+
+CLI: `result-chamber-animator session.csv --gif session.gif` (or `--mp4 out.mp4` with ffmpeg, `--frame 42 --png frame42.png`, `--subject rat`).
+
+## Docs
+
+- [README](https://github.com/OperantKit/result-chamber-animator/blob/main/README.md): input format, 30-second example, CLI, subject styles, inter-event behavior synthesis
+- [AGENTS.md](https://github.com/OperantKit/result-chamber-animator/blob/main/AGENTS.md): when to use this package and what not to do
+
+## Related packages
+
+- [session-recorder](https://github.com/OperantKit/session-recorder): writes the OKL v1 logs this package can read (`pip install session-recorder`)
+- [session-runner](https://github.com/OperantKit/session-runner): runs sessions to record (`pip install session-runner`)
+- [contingency-py](https://github.com/OperantKit/contingency-py): schedule engine used in the README's programmatic example (`pip install contingency-py`)
+- [session-analyzer](https://github.com/OperantKit/session-analyzer): cumulative records and quantitative analyses of the same logs (`pip install session-analyzer`)

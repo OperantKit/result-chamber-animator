@@ -71,6 +71,46 @@ result-chamber-animator session.csv --mp4 out.mp4 \
 result-chamber-animator session.csv --mp4 out.mp4 --fps 4
 ```
 
+## 30 秒で動く例
+
+```bash
+pip install git+https://github.com/OperantKit/result-chamber-animator
+```
+
+記録済みのセッションをチャンバーのアニメーションにする:
+
+```python
+import matplotlib
+
+matplotlib.use("Agg")  # headless
+
+import pandas as pd
+
+from result_chamber_animator import animate, steps_from_dataframe
+
+# 記録済みのセッション: 各ステップでどのオペランダムが押され、強化されたか。
+rows = pd.DataFrame(
+    {
+        "step": range(8),
+        "chosen_response": ["lever_left", "lever_left", "lever_right", "lever_left",
+                            "lever_right", "lever_right", "lever_left", "lever_right"],
+        "is_reinforced": [False, True, False, False, False, True, True, False],
+    }
+)
+frames = steps_from_dataframe(rows, dt=1.0)
+print(len(frames), sum(f.is_reinforced for f in frames))  # 8 3
+animate(frames, output_path="session.gif", fps=4)  # GIF は ffmpeg 不要。ffmpeg があれば .mp4 も可
+```
+
+各コマで被験体はそのステップで押されたオペランダムの位置に置かれ、強化されたステップでは給餌器が光る（タイトルに `+SR` と出る）。同じ行は CLI から CSV や JSONL ファイルとしても渡せる: `result-chamber-animator session.csv --gif session.gif`。
+
+## セッションを手でアニメーションにしない理由
+
+- **既定では記録されたイベントだけ.** 1 記録 1 コマで、頼まない限り何も作り足さない。
+- **合成したイベント間行動には印を付ける.** `--inter-event-behavior` は記録の間に補間コマを足し、付随行動・中間行動・終末行動に分類する (Falk, 1961, 1971; Staddon & Simmelhag, 1971)。README には、そのときは 1 対 1 の再生ではなくなることを明記している。
+- **セッションが出す形式を読む.** CSV、JSONL、（session-recorder が入っていれば）OKL v1 の記録。OKL v1 では強化子イベントをそれを生んだ反応に対応づける。
+- **被験体と出力.** 被験体は球・ラット・ハトの描き方を選べる。1 ステップの PNG、ffmpeg 不要の GIF、ffmpeg を使う MP4 で書き出せる。
+
 ## インストール
 
 ```bash
@@ -96,7 +136,7 @@ result-chamber-animator session.csv --gif out.gif --fps 5
 # 単一ステップの静止画 PNG
 result-chamber-animator session.csv --frame 42 --png frame42.png
 
-# JSONL 入力（session_recorder からのエクスポートなど）
+# JSONL 入力（同じ 3 つのキーを持つオブジェクトを 1 行に 1 つ）
 result-chamber-animator session.jsonl --mp4 out.mp4
 
 # ラット / ハト風被験体
@@ -226,7 +266,7 @@ for step in range(30):
     )
 
 frames = steps_from_dataframe(pd.DataFrame(rows), dt=1.0)
-animate(frames, output_path="demo.mp4", fps=5)
+animate(frames, output_path="demo.gif", fps=5)  # ffmpeg があれば demo.mp4
 ```
 
 ## 制約

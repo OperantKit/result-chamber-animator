@@ -72,6 +72,46 @@ result-chamber-animator session.csv --mp4 out.mp4 \
 result-chamber-animator session.csv --mp4 out.mp4 --fps 4
 ```
 
+## 30-second example
+
+```bash
+pip install git+https://github.com/OperantKit/result-chamber-animator
+```
+
+Turn a recorded session into an animation of the chamber:
+
+```python
+import matplotlib
+
+matplotlib.use("Agg")  # headless
+
+import pandas as pd
+
+from result_chamber_animator import animate, steps_from_dataframe
+
+# A recorded session: which operandum was pressed on each step and whether it was reinforced.
+rows = pd.DataFrame(
+    {
+        "step": range(8),
+        "chosen_response": ["lever_left", "lever_left", "lever_right", "lever_left",
+                            "lever_right", "lever_right", "lever_left", "lever_right"],
+        "is_reinforced": [False, True, False, False, False, True, True, False],
+    }
+)
+frames = steps_from_dataframe(rows, dt=1.0)
+print(len(frames), sum(f.is_reinforced for f in frames))  # 8 3
+animate(frames, output_path="session.gif", fps=4)  # GIF needs no ffmpeg; use .mp4 when ffmpeg is installed
+```
+
+Each frame places the subject at the operandum pressed on that step, and the food hopper lights on reinforced steps (the title shows `+SR`). The same rows can come from a CSV or JSONL file through the CLI: `result-chamber-animator session.csv --gif session.gif`.
+
+## Why not animate the session by hand?
+
+- **Recorded events only, by default.** One frame per recorded step; nothing is invented unless you ask for it.
+- **Inter-event behavior is labeled when it is synthesized.** `--inter-event-behavior` adds filler frames between records and classifies them as adjunctive, interim, or terminal (Falk, 1961, 1971; Staddon & Simmelhag, 1971), and the README states that this is no longer a 1:1 replay.
+- **Reads the formats a session produces.** CSV, JSONL, and (with session-recorder installed) OKL v1 logs, where reinforcer events are matched to the response that produced them.
+- **Subjects and outputs.** Sphere, rat, or pigeon subject styles; PNG for a single step, GIF without ffmpeg, MP4 with ffmpeg.
+
 ## Install
 
 ```bash
@@ -97,7 +137,7 @@ result-chamber-animator session.csv --gif out.gif --fps 5
 # Static PNG of a single step
 result-chamber-animator session.csv --frame 42 --png frame42.png
 
-# JSONL input (e.g. exported from session_recorder)
+# JSONL input (one object per line with the same three keys)
 result-chamber-animator session.jsonl --mp4 out.mp4
 
 # Stylized rat or pigeon subject
@@ -230,7 +270,7 @@ for step in range(30):
     )
 
 frames = steps_from_dataframe(pd.DataFrame(rows), dt=1.0)
-animate(frames, output_path="demo.mp4", fps=5)
+animate(frames, output_path="demo.gif", fps=5)  # demo.mp4 when ffmpeg is installed
 ```
 
 ## Limitations
