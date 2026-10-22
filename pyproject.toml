@@ -17,11 +17,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Reading OKL session logs (the CLI imports these when given an OKL file).
+okl = [
+    "experiment-core>=0.1.1,<0.2",
+    "session-recorder>=0.1.1,<0.2",
+]
 test = [
     "pytest>=8",
     "pytest-cov",
     # The README "Programmatic use" example drives schedules with contingency-py.
     "contingency-py>=0.1.1,<0.2",
+    "result-chamber-animator[okl]",
 ]
 dev = [
     "pytest>=8",

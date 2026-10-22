@@ -109,7 +109,7 @@ Each frame places the subject at the operandum pressed on that step, and the foo
 
 - **Recorded events only, by default.** One frame per recorded step; nothing is invented unless you ask for it.
 - **Inter-event behavior is labeled when it is synthesized.** `--inter-event-behavior` adds filler frames between records and classifies them as adjunctive, interim, or terminal (Falk, 1961, 1971; Staddon & Simmelhag, 1971), and the README states that this is no longer a 1:1 replay.
-- **Reads the formats a session produces.** CSV, JSONL, and (with session-recorder installed) OKL v1 logs, where reinforcer events are matched to the response that produced them.
+- **Reads the formats a session produces.** CSV, JSONL, and (with the `okl` extra: `pip install "result-chamber-animator[okl]"`) OKL v1 logs, where reinforcer events are matched to the response that produced them.
 - **Subjects and outputs.** Sphere, rat, or pigeon subject styles; PNG for a single step, GIF without ffmpeg, MP4 with ffmpeg.
 
 ## Install

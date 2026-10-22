@@ -108,7 +108,7 @@ animate(frames, output_path="session.gif", fps=4)  # GIF は ffmpeg 不要。ffm
 
 - **既定では記録されたイベントだけ.** 1 記録 1 コマで、頼まない限り何も作り足さない。
 - **合成したイベント間行動には印を付ける.** `--inter-event-behavior` は記録の間に補間コマを足し、付随行動・中間行動・終末行動に分類する (Falk, 1961, 1971; Staddon & Simmelhag, 1971)。README には、そのときは 1 対 1 の再生ではなくなることを明記している。
-- **セッションが出す形式を読む.** CSV、JSONL、（session-recorder が入っていれば）OKL v1 の記録。OKL v1 では強化子イベントをそれを生んだ反応に対応づける。
+- **セッションが出す形式を読む.** CSV、JSONL、（`okl` extra を入れれば。`pip install "result-chamber-animator[okl]"`）OKL v1 の記録。OKL v1 では強化子イベントをそれを生んだ反応に対応づける。
 - **被験体と出力.** 被験体は球・ラット・ハトの描き方を選べる。1 ステップの PNG、ffmpeg 不要の GIF、ffmpeg を使う MP4 で書き出せる。
 
 ## インストール
