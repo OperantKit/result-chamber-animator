@@ -8,7 +8,7 @@ version = "0.0.0"
 description = "3D animation of recorded operant-chamber sessions. Consumes a CSV / JSONL session recording (step, chosen_response, is_reinforced columns) and renders chamber + agent + reinforcement events as PNG / MP4 / GIF."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 authors = [{ name = "operantkit contributors" }]
 dependencies = [
     "matplotlib>=3.7",
