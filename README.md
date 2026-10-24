@@ -2,83 +2,36 @@
 
 :jp: [日本語版 README](README.ja.md)
 
-3D animation of recorded operant-chamber sessions. Reads a session
-recording (CSV / JSONL with `step`, `chosen_response`, `is_reinforced`
-columns) and renders an animated chamber where the agent body moves to
-whichever operandum was pressed each step. The food hopper flashes on
-reinforcement.
+result-chamber-animator turns a recorded operant session into an animation of the chamber: the subject moves to the operandum (lever) it responded on at each step, and the food hopper lights up when the response was reinforced. It is meant for teaching and for presenting results, and it only replays data that were already recorded. In [OperantKit](https://github.com/OperantKit) it reads the session logs written by [session-recorder](https://github.com/OperantKit/session-recorder) as well as simple CSV and JSONL files.
 
-The package is purely consumption-side — it never runs a live
-simulation. Pre-record sessions with any producer that emits the
-expected row shape and feed the result here.
+- **One frame per recorded event by default.** Nothing is added unless you ask for it.
+- **Synthesized frames are labeled as such.** The optional in-between frames follow published accounts of behavior between reinforcers and are marked as a model, not data.
+- **PNG, GIF, or MP4.** A single step as an image, a GIF without extra software, or an MP4 when ffmpeg is installed.
 
-Designed for educational use; not a real-time graphics library.
+Notes for AI coding agents are in [AGENTS.md](AGENTS.md).
 
-## Demo
+<p align="center"><img src="docs/assets/thumbnail.png" width="420" alt="3D chamber with a left and a right lever, a yellow food hopper, and a rat silhouette at the hopper; the title reads t=13.0s resp=lever_left +SR"></p>
 
-24 synthetic steps of uniform random choice against concurrent FR(2)
-on the left lever and FR(3) on the right. Top-down rat silhouette with **inter-
-event behaviour synthesis** — between-record filler frames are
-classified into three behaviour-analytic phases (adjunctive at the
-hopper, interim wandering at chamber centre, terminal approach toward
-the next operandum) following Falk (1961, 1971) and Staddon &
-Simmelhag (1971). The food hopper (lower square) flashes yellow on
-reinforcement. The demo MP4s are not committed; regenerate them
-locally with [`docs/examples/demo_session.py`](docs/examples/demo_session.py):
+## Installation
 
-```bash
-.venv/bin/python docs/examples/demo_session.py
-# writes:
-#   docs/assets/demo.mp4         — rat + three-phase inter-event behaviour, 12 fps
-#   docs/assets/demo_strict.mp4  — sphere + recorded steps only, 4 fps
-```
-
-The strict-fidelity variant uses the sphere subject style, 1 frame per
-recorded step, and no synthesised between-event filler. Use it when the
-visualisation must correspond 1:1 to the recorded events.
-
-## Overview
-
-```
-your session producer
-        │  (run + record)
-        ▼
-+-------------------------+        +-------------------------+
-|  CSV / JSONL recording  |  -->   | result-chamber-animator |
-+-------------------------+        +-------------------------+
-                                            │
-                       ┌────────────────────┼────────────────────┐
-                       ▼                    ▼                    ▼
-                  static PNG          animated MP4          animated GIF
-```
-
-Public API:
-
-```python
-from result_chamber_animator import (
-    Chamber, Operandum, default_two_lever_chamber,
-    StepFrame, render_frame, animate, steps_from_dataframe,
-)
-```
-
-CLI:
-
-```bash
-# Headline demo: rat + three-phase inter-event behaviour
-result-chamber-animator session.csv --mp4 out.mp4 \
-    --subject rat --inter-event-behavior --fps 12
-
-# Strict 1-frame-per-record (sphere style, default)
-result-chamber-animator session.csv --mp4 out.mp4 --fps 4
-```
-
-## 30-second example
+Python 3.11 or newer. result-chamber-animator is not on PyPI yet, so `pip install result-chamber-animator` does not work today. Install it from GitHub:
 
 ```bash
 pip install git+https://github.com/OperantKit/result-chamber-animator
 ```
 
-Turn a recorded session into an animation of the chamber:
+This is enough for CSV and JSONL input. To read OKL session logs as well, add session-recorder and the OperantKit packages it needs, without dependency resolution:
+
+```bash
+G=git+https://github.com/OperantKit
+pip install --no-deps $G/contingency-dsl-py $G/contingency-py $G/experiment-core $G/session-recorder
+```
+
+MP4 output needs `ffmpeg` on `PATH`.
+
+## Example
+
+Turn a recorded session into an animated GIF:
 
 ```python
 import matplotlib
@@ -103,188 +56,100 @@ print(len(frames), sum(f.is_reinforced for f in frames))  # 8 3
 animate(frames, output_path="session.gif", fps=4)  # GIF needs no ffmpeg; use .mp4 when ffmpeg is installed
 ```
 
-Each frame places the subject at the operandum pressed on that step, and the food hopper lights on reinforced steps (the title shows `+SR`). The same rows can come from a CSV or JSONL file through the CLI: `result-chamber-animator session.csv --gif session.gif`.
+Each frame places the subject at the operandum pressed on that step, and on reinforced steps the hopper lights and the title shows `+SR`. The same rows saved as a CSV file give the same GIF from the command line: `result-chamber-animator session.csv --gif session.gif`.
 
-## Why not animate the session by hand?
+## Usage
 
-- **Recorded events only, by default.** One frame per recorded step; nothing is invented unless you ask for it.
-- **Inter-event behavior is labeled when it is synthesized.** `--inter-event-behavior` adds filler frames between records and classifies them as adjunctive, interim, or terminal (Falk, 1961, 1971; Staddon & Simmelhag, 1971), and the README states that this is no longer a 1:1 replay.
-- **Reads the formats a session produces.** CSV, JSONL, and (with the `okl` extra: `pip install "result-chamber-animator[okl]"`) OKL v1 logs, where reinforcer events are matched to the response that produced them.
-- **Subjects and outputs.** Sphere, rat, or pigeon subject styles; PNG for a single step, GIF without ffmpeg, MP4 with ffmpeg.
+### Input
 
-## Install
+- **CSV or JSONL** (`.csv`, `.jsonl`, `.ndjson`) with the columns `step`, `chosen_response` (`lever_left` or `lever_right` in the default two-lever chamber), and `is_reinforced`.
+- **OKL v1 session logs** (any other file whose first line is `# OKL v1`), with session-recorder installed. Each response is drawn at its operandum (0 = left lever, 1 = right lever) and counts as reinforced when a reinforcer on the same operandum follows within 50 ms; reinforcer events put the subject at the hopper.
 
-```bash
-mise exec -- python -m venv .venv
-.venv/bin/python -m pip install -e ".[dev]"
-```
-
-## Run tests
+### Command line
 
 ```bash
-.venv/bin/python -m pytest -q
-```
-
-## CLI
-
-```bash
-# Animate the whole session as MP4 (requires ffmpeg on PATH)
+# MP4 (requires ffmpeg on PATH)
 result-chamber-animator session.csv --mp4 out.mp4 --fps 10
 
-# GIF fallback (no ffmpeg dependency, larger file size)
+# GIF (no ffmpeg needed, larger file)
 result-chamber-animator session.csv --gif out.gif --fps 5
 
-# Static PNG of a single step
+# One step as a still image
 result-chamber-animator session.csv --frame 42 --png frame42.png
 
-# JSONL input (one object per line with the same three keys)
-result-chamber-animator session.jsonl --mp4 out.mp4
-
-# Stylized rat or pigeon subject
+# Rat or pigeon instead of the default sphere
 result-chamber-animator session.csv --mp4 out.mp4 --subject rat
-result-chamber-animator session.csv --mp4 out.mp4 --subject pigeon
 
-# Insert synthesised filler frames between recorded steps and classify
-# each into adjunctive / interim / terminal (see "Inter-event behaviour
-# synthesis" below). NOT a 1:1 replay of the record — turn off when
-# strict frame-to-record fidelity matters.
-result-chamber-animator session.csv --mp4 out.mp4 \
-    --inter-event-behavior --fps 12
-
-# Tune the phase windows
-result-chamber-animator session.csv --mp4 out.mp4 \
-    --inter-event-behavior \
-    --adjunctive-window 3.0 --terminal-window 1.5
-
-# Deterministic jitter via --seed
-result-chamber-animator session.csv --mp4 out.mp4 \
-    --inter-event-behavior --seed 0
+# Add synthesized frames between recorded events (see below)
+result-chamber-animator session.csv --mp4 out.mp4 --subject rat --inter-event-behavior --fps 12
 ```
 
-## Subject illustration styles
+`result-chamber-animator --help` lists all options, including the window lengths and the random seed for the synthesized frames.
 
-The chamber is rendered in 3D (wireframe + operanda + hopper) but the
-subject is a **2D top-down silhouette laid flat on the chamber floor
-and rotated around the vertical axis to face its target** — the
-Live2D / VTuber idiom (a 2D rigged sprite inside a 3D scene), here
-adapted for textbook-style operant-chamber visualisation.
+### Subjects
 
-| `--subject` | What's drawn | Notes |
-|---|---|---|
-| `sphere` (default) | A single brown sphere on the floor | Minimal baseline; emphasises subject-as-position |
-| `rat` | Top-down rat silhouette: pointed snout, ears, body, long tapering tail | Filled polygon, ~33 vertices |
-| `pigeon` | Top-down pigeon silhouette: pointed beak, head, body, tail fan | Filled polygon, ~28 vertices |
+The chamber is drawn in 3D; the subject is a flat top-down figure on the chamber floor, turned to face the operandum it responds on.
 
-The silhouettes are rotated around the chamber's vertical axis so that
-the snout / beak always points toward the operandum being pressed. On
-free-operant filler frames the polygon also picks up a subtle
-sinusoidal scale pulse (~±4 %) for a "breathing" feel — turn off
-`--free-operant` to remove the pulse and have one frame per record.
+| `--subject` | What is drawn |
+|---|---|
+| `sphere` (default) | A brown sphere: the subject as a position only |
+| `rat` | Top-down rat silhouette: snout, ears, body, tail |
+| `pigeon` | Top-down pigeon silhouette: beak, head, body, tail fan |
 
-## Inter-event behaviour synthesis
+### Behavior between recorded events
 
-The simulator records discrete events at integer step indices. Between
-events the subject is doing *something* — and decades of behaviour-
-analytic work have characterised that "something" as a temporally
-structured sequence. The renderer can synthesise filler frames between
-recorded events and classify each into one of three phases drawn
-straight from the post-Skinnerian taxonomy:
+With `--inter-event-behavior` (or `inject_inter_event_behavior=True` in `animate`), the renderer adds frames between recorded events and assigns each to one of three phases of behavior between reinforcers:
 
-| Phase | When | Where the subject is rendered | Reference |
+| Phase | When | Where the subject is drawn | Reference |
 |---|---|---|---|
-| **Adjunctive** | Within `adjunctive_window_s` after a reinforcer | At the food magazine (post-reinforcement licking, drinking, grooming; "adjunctive" in Falk's sense) | Falk (1961); Falk (1971) |
-| **Terminal** | Within `terminal_window_s` before the next recorded response | Drifting from the last anchor toward the operandum about to be pressed | Staddon & Simmelhag (1971) |
-| **Interim** | Otherwise (middle of the inter-event gap) | Wandering near chamber centre — schedule-induced displacement-like activity | Staddon & Simmelhag (1971); Timberlake & Lucas (1985) |
+| **Adjunctive** | Within `adjunctive_window_s` after a reinforcer | At the food hopper | Falk (1961, 1971) |
+| **Interim** | The middle of the gap | Walking along the chamber walls | Staddon & Simmelhag (1971); Timberlake & Lucas (1985) |
+| **Terminal** | Within `terminal_window_s` before the next recorded response | Moving toward the operandum about to be pressed | Staddon & Simmelhag (1971) |
 
-Adjunctive precedes terminal at their boundary — the magazine-orienting
-phase wins for short inter-event intervals (otherwise a 1 s
-inter-response interval after reinforcement would be tagged as
-"terminal", which contradicts the empirical phase ordering).
+Where the two windows overlap, the adjunctive phase wins, so a short interval after a reinforcer is not labeled terminal. On these frames the figure also scales slightly in and out (about ±4%).
 
 ```python
 animate(
     frames,
     inject_inter_event_behavior=True,  # off by default
-    adjunctive_window_s=3.0,            # post-SR+ window for hopper-orientation
-    terminal_window_s=1.5,              # pre-response window for approach
+    adjunctive_window_s=3.0,            # after a reinforcer: at the hopper
+    terminal_window_s=1.5,              # before a response: approaching the operandum
     jitter_amplitude=0.005,             # max random offset, metres
-    seed=0,                             # deterministic jitter
+    seed=0,                             # same seed, same frames
     fps=12,
+    output_path="between.gif",
 )
 ```
 
-**The synthesised frames do NOT correspond to recorded events.** They
-are a *behaviour-systems model* of the inter-event interval, not a
-replay of the data. Reinforcement flashes fire only on actual recorded
-steps. Turn injection off whenever the visualisation must match the
-record 1:1.
+**The synthesized frames do not correspond to recorded events.** They are a model of the interval between events, not a replay of the data; the hopper lights only on recorded reinforced steps. Leave this option off whenever the animation must match the record one to one.
 
-References (APA 7):
-
-- Falk, J. L. (1961). Production of polydipsia in normal rats by an
-  intermittent food schedule. *Science*, *133*(3447), 195-196.
-  https://doi.org/10.1126/science.133.3447.195
-- Falk, J. L. (1971). The nature and determinants of adjunctive
-  behavior. *Physiology & Behavior*, *6*(5), 577-588.
-  https://doi.org/10.1016/0031-9384(71)90209-5
-- Staddon, J. E. R., & Simmelhag, V. L. (1971). The "superstition"
-  experiment: A reexamination of its implications for the principles of
-  adaptive behavior. *Psychological Review*, *78*(1), 3-43.
-  https://doi.org/10.1037/h0030305
-- Timberlake, W., & Lucas, G. A. (1985). The basis of superstitious
-  behavior: Chance contingency, stimulus substitution, or appetitive
-  behavior? *Journal of the Experimental Analysis of Behavior*, *44*(3),
-  279-299. https://doi.org/10.1901/jeab.1985.44-279
-
-## Programmatic use
-
-```python
-import matplotlib
-
-matplotlib.use("Agg")  # headless
-
-import contingency
-import numpy as np
-import pandas as pd
-from contingency.entities import ResponseEvent
-
-from result_chamber_animator import animate, steps_from_dataframe
-
-rng = np.random.default_rng(0)
-schedules = {
-    "lever_left":  contingency.ScheduleBuilder.fr(2),
-    "lever_right": contingency.ScheduleBuilder.fr(3),
-}
-options = list(schedules)
-
-rows = []
-for step in range(30):
-    chosen = options[int(rng.integers(0, len(options)))]
-    now = float(step + 1)
-    outcome = schedules[chosen].step(
-        now, ResponseEvent(time=now, operandum=chosen)
-    )
-    rows.append(
-        {"step": step, "chosen_response": chosen,
-         "is_reinforced": bool(outcome.reinforced)}
-    )
-
-frames = steps_from_dataframe(pd.DataFrame(rows), dt=1.0)
-animate(frames, output_path="demo.gif", fps=5)  # demo.mp4 when ffmpeg is installed
-```
+[`docs/examples/demo_session.py`](docs/examples/demo_session.py) writes two demo MP4s to `docs/assets/`: a rat with synthesized in-between frames at 12 fps, and a sphere with recorded steps only at 4 fps.
 
 ## Limitations
 
-- Consumes recorded data only; does not run live simulations.
-- Discrete-time; the renderer treats each recorded step as one frame.
-- Geometry is intentionally minimal — boxy chamber, sphere agent, no
-  manufacturer-specific apparatus.
-- MP4 export requires `ffmpeg` available on `PATH`.
+- Replays recorded data only; it does not run a session.
+- Each recorded step or event is one frame; time between events is not drawn unless synthesized frames are turned on.
+- The chamber is a plain box with two levers and a hopper, not a model of any manufacturer's apparatus.
+- In an OKL log, responses must record their operandum. A log whose responses have no operandum stops with `KeyError: unknown operandum key 'lever'`, because the default chamber has only a left and a right lever.
+- MP4 output needs `ffmpeg`.
+
+## Development
+
+```bash
+python -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
+.venv/bin/python -m pytest
+```
+
+Every `python` block in this README and `README.ja.md` is run by `tests/test_readme_examples.py`.
 
 ## References
 
-- Skinner, B. F. (1938). *The behavior of organisms: An experimental
-  analysis*. Appleton-Century.
-- Lattal, K. A. (2004). Steps and pips in the history of the cumulative
-  recorder. *Journal of the Experimental Analysis of Behavior*, *82*(3),
-  329-355. https://doi.org/10.1901/jeab.2004.82-329
+- Falk, J. L. (1961). Production of polydipsia in normal rats by an intermittent food schedule. *Science*, *133*(3447), 195-196. https://doi.org/10.1126/science.133.3447.195
+- Falk, J. L. (1971). The nature and determinants of adjunctive behavior. *Physiology & Behavior*, *6*(5), 577-588. https://doi.org/10.1016/0031-9384(71)90209-5
+- Staddon, J. E. R., & Simmelhag, V. L. (1971). The "superstition" experiment: A reexamination of its implications for the principles of adaptive behavior. *Psychological Review*, *78*(1), 3-43. https://doi.org/10.1037/h0030305
+- Timberlake, W., & Lucas, G. A. (1985). The basis of superstitious behavior: Chance contingency, stimulus substitution, or appetitive behavior? *Journal of the Experimental Analysis of Behavior*, *44*(3), 279-299. https://doi.org/10.1901/jeab.1985.44-279
+
+## License
+
+MIT (declared in `pyproject.toml`; the repository has no LICENSE file).

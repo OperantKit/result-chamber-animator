@@ -2,93 +2,47 @@
 
 :gb: [English README](README.md)
 
-記録済みオペラント箱セッションの 3D アニメーション化ツール。
-セッション記録（`step` / `chosen_response` / `is_reinforced` 列を持つ
-CSV / JSONL）を読み込み、各ステップで押された操作体（lever / key）に
-エージェント本体が移動するオペラント箱を描画する。強化が発生した
-ステップでは餌ホッパーが発光する。
+result-chamber-animator は、記録済みのオペラント実験のセッションを、実験箱のアニメーションにします。被験体は各ステップで反応したオペランダム（レバー）の位置へ動き、その反応が強化されたときには餌の給餌器（ホッパー）が光ります。授業や結果の発表のための道具で、すでに記録されたデータを再生するだけです。[OperantKit](https://github.com/OperantKit) の中では、[session-recorder](https://github.com/OperantKit/session-recorder) が書くセッションログに加え、単純な CSV と JSONL のファイルを読みます。
 
-本パッケージは消費側専用 — ライブシミュレーションは行わない。
-事前に同じ行形式を出力する任意の producer でセッションを記録し、
-その結果を本ツールに渡して使う。
+- **既定では、記録された出来事 1 つにつき 1 コマです。** 指定しない限り、何も足しません。
+- **合成したコマには、合成したことを明示します。** 任意で足せる出来事の間のコマは、強化と強化の間の行動についての公刊された説明に従うもので、データではなくモデルとして扱います。
+- **PNG・GIF・MP4 に出力できます。** 1 ステップの静止画、追加のソフトなしの GIF、ffmpeg があれば MP4 です。
 
-教育用途を想定した最小構成。リアルタイム描画ライブラリではない。
+AI コーディングエージェント向けの案内は [AGENTS.md](AGENTS.md) にあります。
 
-## デモ
+<p align="center"><img src="docs/assets/thumbnail.png" width="420" alt="左右のレバーと黄色い給餌器のある 3D の実験箱。給餌器のそばにラットのシルエット。タイトルは t=13.0s resp=lever_left +SR"></p>
 
-並立 FR(2)（左 lever）/ FR(3)（右 lever）に対して uniform random choice
-を 24 合成ステップ走らせた結果。上から見たラット silhouette + **inter-event
-behaviour 合成** — 記録間の補間フレームを Falk (1961, 1971) および
-Staddon & Simmelhag (1971) に従い 3 相（adjunctive: 餌ホッパー前、
-interim: チャンバ中央で wandering、terminal: 次の operandum へ接近）に
-分類して描画する。強化が起きたステップで餌ホッパー（下のグレー四角）が
-黄色く発光する。デモ MP4 は commit されていないため、ローカルで
-[`docs/examples/demo_session.py`](docs/examples/demo_session.py) を
-実行して生成する:
+## インストール
 
-```bash
-.venv/bin/python docs/examples/demo_session.py
-# 出力:
-#   docs/assets/demo.mp4         — ラット + 3 相 inter-event behaviour、12 fps
-#   docs/assets/demo_strict.mp4  — 球 + 記録ステップのみ、4 fps
-```
-
-厳密フィデリティ版は球スタイル・1 記録ステップ = 1 フレーム・合成
-フィルタなし。可視化を記録イベントと 1:1 対応させたい場合に使う。
-
-## 概要
-
-```
-任意のセッション producer
-        │  (実行 + 記録)
-        ▼
-+-------------------------+        +-------------------------+
-|  CSV / JSONL recording  |  -->   | result-chamber-animator |
-+-------------------------+        +-------------------------+
-                                            │
-                       ┌────────────────────┼────────────────────┐
-                       ▼                    ▼                    ▼
-                   静止画 PNG        アニメーション MP4     アニメーション GIF
-```
-
-公開 API:
-
-```python
-from result_chamber_animator import (
-    Chamber, Operandum, default_two_lever_chamber,
-    StepFrame, render_frame, animate, steps_from_dataframe,
-)
-```
-
-CLI:
-
-```bash
-# 主デモ: ラット + 3 相 inter-event behaviour
-result-chamber-animator session.csv --mp4 out.mp4 \
-    --subject rat --inter-event-behavior --fps 12
-
-# 厳密 1 記録 = 1 フレーム（デフォルト, 球スタイル）
-result-chamber-animator session.csv --mp4 out.mp4 --fps 4
-```
-
-## 30 秒で動く例
+Python 3.11 以上が必要です。result-chamber-animator はまだ PyPI に登録されていないため、`pip install result-chamber-animator` は今のところ使えません。GitHub から入れてください。
 
 ```bash
 pip install git+https://github.com/OperantKit/result-chamber-animator
 ```
 
-記録済みのセッションをチャンバーのアニメーションにする:
+CSV と JSONL の入力ならこれで足ります。OKL のセッションログも読むには、session-recorder と、それが必要とする OperantKit のパッケージを、依存の解決をせずに足してください。
+
+```bash
+G=git+https://github.com/OperantKit
+pip install --no-deps $G/contingency-dsl-py $G/contingency-py $G/experiment-core $G/session-recorder
+```
+
+MP4 の出力には、`PATH` 上の `ffmpeg` が必要です。
+
+## 例
+
+記録済みのセッションをアニメーション GIF にします。
 
 ```python
 import matplotlib
 
-matplotlib.use("Agg")  # headless
+matplotlib.use("Agg")  # 画面なしで描く
 
 import pandas as pd
 
 from result_chamber_animator import animate, steps_from_dataframe
 
-# 記録済みのセッション: 各ステップでどのオペランダムが押され、強化されたか。
+# 記録済みのセッション：各ステップで押されたオペランダムと、強化されたかどうか。
 rows = pd.DataFrame(
     {
         "step": range(8),
@@ -102,185 +56,100 @@ print(len(frames), sum(f.is_reinforced for f in frames))  # 8 3
 animate(frames, output_path="session.gif", fps=4)  # GIF は ffmpeg 不要。ffmpeg があれば .mp4 も可
 ```
 
-各コマで被験体はそのステップで押されたオペランダムの位置に置かれ、強化されたステップでは給餌器が光る（タイトルに `+SR` と出る）。同じ行は CLI から CSV や JSONL ファイルとしても渡せる: `result-chamber-animator session.csv --gif session.gif`。
+各コマでは、そのステップで押されたオペランダムの位置に被験体が置かれます。強化されたステップでは給餌器が光り、タイトルに `+SR` が出ます。同じ行を CSV ファイルに保存すれば、コマンドラインからも同じ GIF が作れます：`result-chamber-animator session.csv --gif session.gif`。
 
-## セッションを手でアニメーションにしない理由
+## 使い方
 
-- **既定では記録されたイベントだけ.** 1 記録 1 コマで、頼まない限り何も作り足さない。
-- **合成したイベント間行動には印を付ける.** `--inter-event-behavior` は記録の間に補間コマを足し、付随行動・中間行動・終末行動に分類する (Falk, 1961, 1971; Staddon & Simmelhag, 1971)。README には、そのときは 1 対 1 の再生ではなくなることを明記している。
-- **セッションが出す形式を読む.** CSV、JSONL、（`okl` extra を入れれば。`pip install "result-chamber-animator[okl]"`）OKL v1 の記録。OKL v1 では強化子イベントをそれを生んだ反応に対応づける。
-- **被験体と出力.** 被験体は球・ラット・ハトの描き方を選べる。1 ステップの PNG、ffmpeg 不要の GIF、ffmpeg を使う MP4 で書き出せる。
+### 入力
 
-## インストール
+- **CSV または JSONL**（`.csv`、`.jsonl`、`.ndjson`）。列は `step`、`chosen_response`（既定の 2 レバーの実験箱では `lever_left` か `lever_right`）、`is_reinforced` です。
+- **OKL v1 のセッションログ**（それ以外のファイルで、1 行目が `# OKL v1` のもの）。session-recorder が必要です。各反応はそのオペランダム（0 = 左レバー、1 = 右レバー）の位置に描かれ、同じオペランダムへの強化子が 50 ミリ秒以内に続けば強化されたものと数えます。強化子の出来事では、被験体は給餌器の位置に置かれます。
 
-```bash
-mise exec -- python -m venv .venv
-.venv/bin/python -m pip install -e ".[dev]"
-```
-
-## テスト実行
+### コマンドライン
 
 ```bash
-.venv/bin/python -m pytest -q
-```
-
-## CLI
-
-```bash
-# セッション全体を MP4 に（ffmpeg が PATH 上に必要）
+# MP4（PATH 上の ffmpeg が必要）
 result-chamber-animator session.csv --mp4 out.mp4 --fps 10
 
-# GIF フォールバック（ffmpeg 不要、ファイルサイズは大きくなる）
+# GIF（ffmpeg 不要、ファイルは大きめ）
 result-chamber-animator session.csv --gif out.gif --fps 5
 
-# 単一ステップの静止画 PNG
+# 1 ステップを静止画に
 result-chamber-animator session.csv --frame 42 --png frame42.png
 
-# JSONL 入力（同じ 3 つのキーを持つオブジェクトを 1 行に 1 つ）
-result-chamber-animator session.jsonl --mp4 out.mp4
-
-# ラット / ハト風被験体
+# 既定の球の代わりにラットやハト
 result-chamber-animator session.csv --mp4 out.mp4 --subject rat
-result-chamber-animator session.csv --mp4 out.mp4 --subject pigeon
 
-# 記録間にフィルタフレームを挿入し、各フレームを adjunctive / interim
-# / terminal の 3 相に分類する（下記「Inter-event behaviour 合成」参照）。
-# 記録と 1:1 対応しない合成フレームなので、厳密フィデリティが必要な
-# 場合は OFF にする。
-result-chamber-animator session.csv --mp4 out.mp4 \
-    --inter-event-behavior --fps 12
-
-# 相ウィンドウの調整
-result-chamber-animator session.csv --mp4 out.mp4 \
-    --inter-event-behavior \
-    --adjunctive-window 3.0 --terminal-window 1.5
-
-# --seed で jitter を再現可能に
-result-chamber-animator session.csv --mp4 out.mp4 \
-    --inter-event-behavior --seed 0
+# 記録された出来事の間に合成したコマを足す（下を参照）
+result-chamber-animator session.csv --mp4 out.mp4 --subject rat --inter-event-behavior --fps 12
 ```
 
-## 被験体イラストのスタイル
+合成するコマの時間窓の長さや乱数の種を含むすべてのオプションは、`result-chamber-animator --help` で確認できます。
 
-チャンバ自体は 3D（ワイヤーフレーム + operanda + 餌ホッパー）で描画
-するが、被験体は **チャンバ床に貼り付けた 2D 上面シルエットを鉛直軸
-まわりに回転させて方向を合わせる** Live2D / VTuber 流儀（2D rigged
-スプライトを 3D シーン内に配置する手法）を採用している。教科書風の
-operant-chamber 図解との相性が良い。
+### 被験体
 
-| `--subject` | 描画される内容 | 補足 |
-|---|---|---|
-| `sphere`（デフォルト） | 床に置いた茶色い球 1 個 | 最小ベースライン。被験体を「位置」だけに抽象化 |
-| `rat` | 上から見たラット silhouette: 尖った吻、耳、胴体、長く細い尻尾 | 塗りつぶし polygon, 約 33 頂点 |
-| `pigeon` | 上から見たハト silhouette: 尖ったくちばし、頭、胴体、尾扇 | 塗りつぶし polygon, 約 28 頂点 |
+実験箱は 3D で描きます。被験体は実験箱の床に置いた真上から見た平たい図で、反応するオペランダムの方を向くよう回転します。
 
-シルエットはチャンバの鉛直軸まわりに回転し、吻 / くちばしが押した
-operandum 方向を向く。`--free-operant` 補間フレームでは、わずかな
-正弦波のスケール脈動（約 ±4%）が加わり「呼吸」しているような印象を
-与える。`--free-operant` を OFF にすれば脈動も消え、記録 1 ステップ
-= 1 フレームに戻る。
+| `--subject` | 描くもの |
+|---|---|
+| `sphere`（既定） | 茶色の球。被験体を位置としてだけ示します |
+| `rat` | 真上から見たラットのシルエット：鼻先、耳、胴、尾 |
+| `pigeon` | 真上から見たハトのシルエット：くちばし、頭、胴、扇形の尾 |
 
-## Inter-event behaviour 合成
+### 記録された出来事の間の行動
 
-シミュレータは離散整数ステップでイベントを記録する。実際にはイベント
-の合間に被験体は何かをしており、行動分析学はその「何か」を時間的に
-構造化された連続列として特徴づけてきた。本レンダラは記録間にフィルタ
-フレームを挿入し、各フレームをスキナー以降の標準的分類に基づき 3 相に
-分類する:
+`--inter-event-behavior`（`animate` では `inject_inter_event_behavior=True`）を付けると、記録された出来事の間にコマを足し、それぞれを強化と強化の間の行動の 3 つのフェイズのどれかに割り当てます。
 
-| 相 | タイミング | 描画位置 | 出典 |
+| フェイズ | いつ | 被験体を描く位置 | 文献 |
 |---|---|---|---|
-| **Adjunctive（補助行動相）** | 強化後 `adjunctive_window_s` 秒以内 | 餌ホッパー前（強化後の摂食・飲水・グルーミング；Falk の adjunctive） | Falk (1961); Falk (1971) |
-| **Terminal（終末相）** | 次の記録反応の `terminal_window_s` 秒以内 | 直前の anchor から押される operandum へ移動 | Staddon & Simmelhag (1971) |
-| **Interim（合間相）** | それ以外（イベント間の中盤） | チャンバ中央で wandering — schedule-induced な displacement 様活動 | Staddon & Simmelhag (1971); Timberlake & Lucas (1985) |
+| **付随（adjunctive）** | 強化子の後 `adjunctive_window_s` 以内 | 給餌器のそば | Falk (1961, 1971) |
+| **中間（interim）** | 間隔の中ほど | 実験箱の壁に沿って歩く | Staddon & Simmelhag (1971); Timberlake & Lucas (1985) |
+| **終端（terminal）** | 次に記録された反応の前 `terminal_window_s` 以内 | これから押すオペランダムへ近づく | Staddon & Simmelhag (1971) |
 
-境界では adjunctive が terminal に優先する — 短い inter-event 間隔
-（例: dt=1s で強化直後の次反応）が「terminal」に分類されると経験的相
-順序と矛盾するため、強化直後はまず magazine 指向相とする。
+2 つの時間窓が重なるところでは付随のフェイズを優先するため、強化子の直後の短い間隔が終端と分類されることはありません。これらのコマでは、図がわずかに（約 ±4%）伸び縮みします。
 
 ```python
 animate(
     frames,
-    inject_inter_event_behavior=True,  # デフォルト OFF
-    adjunctive_window_s=3.0,            # 強化後 hopper 指向相の長さ
-    terminal_window_s=1.5,              # 反応前 approach 相の長さ
-    jitter_amplitude=0.005,             # 最大ランダム変位（m）
-    seed=0,                             # jitter を決定的にする
+    inject_inter_event_behavior=True,  # 既定ではオフ
+    adjunctive_window_s=3.0,            # 強化子の後：給餌器のそば
+    terminal_window_s=1.5,              # 反応の前：オペランダムへ接近
+    jitter_amplitude=0.005,             # ランダムなずれの最大値（メートル）
+    seed=0,                             # 同じ種なら同じコマ
     fps=12,
+    output_path="between.gif",
 )
 ```
 
-**合成フレームは記録イベントに対応しない**。これは inter-event 区間の
-*behaviour-systems モデル* であり、データのリプレイではない。強化
-フラッシュは実際の記録ステップでのみ発火する。可視化を記録と 1:1
-一致させたい場合は必ず OFF にすること。
+**合成したコマは、記録された出来事に対応しません。** これは出来事の間の時間のモデルであり、データの再生ではありません。給餌器が光るのは、記録上で強化されたステップだけです。アニメーションを記録と 1 対 1 で対応させる必要があるときは、このオプションをオフにしてください。
 
-参考文献 (APA 7):
+[`docs/examples/demo_session.py`](docs/examples/demo_session.py) は、2 本のデモ MP4 を `docs/assets/` に書き出します。出来事の間のコマを合成したラット（12 fps）と、記録されたステップだけの球（4 fps）です。
 
-- Falk, J. L. (1961). Production of polydipsia in normal rats by an
-  intermittent food schedule. *Science*, *133*(3447), 195-196.
-  https://doi.org/10.1126/science.133.3447.195
-- Falk, J. L. (1971). The nature and determinants of adjunctive
-  behavior. *Physiology & Behavior*, *6*(5), 577-588.
-  https://doi.org/10.1016/0031-9384(71)90209-5
-- Staddon, J. E. R., & Simmelhag, V. L. (1971). The "superstition"
-  experiment: A reexamination of its implications for the principles of
-  adaptive behavior. *Psychological Review*, *78*(1), 3-43.
-  https://doi.org/10.1037/h0030305
-- Timberlake, W., & Lucas, G. A. (1985). The basis of superstitious
-  behavior: Chance contingency, stimulus substitution, or appetitive
-  behavior? *Journal of the Experimental Analysis of Behavior*, *44*(3),
-  279-299. https://doi.org/10.1901/jeab.1985.44-279
+## 制限
 
-## プログラムからの利用
+- 記録済みのデータを再生するだけで、セッションは走らせません。
+- 記録されたステップや出来事 1 つが 1 コマです。合成したコマをオンにしない限り、出来事の間の時間は描きません。
+- 実験箱は 2 本のレバーと給餌器のある単純な箱で、特定のメーカーの装置を模したものではありません。
+- OKL のログでは、反応がオペランダムを記録している必要があります。反応にオペランダムが無いログは、既定の実験箱に左右のレバーしか無いため、`KeyError: unknown operandum key 'lever'` で止まります。
+- MP4 の出力には `ffmpeg` が必要です。
 
-```python
-import matplotlib
+## 開発
 
-matplotlib.use("Agg")  # headless
-
-import contingency
-import numpy as np
-import pandas as pd
-from contingency.entities import ResponseEvent
-
-from result_chamber_animator import animate, steps_from_dataframe
-
-rng = np.random.default_rng(0)
-schedules = {
-    "lever_left":  contingency.ScheduleBuilder.fr(2),
-    "lever_right": contingency.ScheduleBuilder.fr(3),
-}
-options = list(schedules)
-
-rows = []
-for step in range(30):
-    chosen = options[int(rng.integers(0, len(options)))]
-    now = float(step + 1)
-    outcome = schedules[chosen].step(
-        now, ResponseEvent(time=now, operandum=chosen)
-    )
-    rows.append(
-        {"step": step, "chosen_response": chosen,
-         "is_reinforced": bool(outcome.reinforced)}
-    )
-
-frames = steps_from_dataframe(pd.DataFrame(rows), dt=1.0)
-animate(frames, output_path="demo.gif", fps=5)  # ffmpeg があれば demo.mp4
+```bash
+python -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
+.venv/bin/python -m pytest
 ```
 
-## 制約
-
-- 記録済みデータの消費側ツール。ライブシミュレーションは行わない。
-- 離散時間。記録された各ステップを 1 フレームとして描画する。
-- ジオメトリは意図的に簡素（直方体チャンバ、球型エージェント、
-  特定メーカーの装置寸法は再現しない）。
-- MP4 出力には `ffmpeg` が `PATH` 上に必要。
+この README と `README.md` の `python` のコードブロックはすべて、`tests/test_readme_examples.py` が実行します。
 
 ## 参考文献
 
-- Skinner, B. F. (1938). *The behavior of organisms: An experimental
-  analysis*. Appleton-Century.
-- Lattal, K. A. (2004). Steps and pips in the history of the cumulative
-  recorder. *Journal of the Experimental Analysis of Behavior*, *82*(3),
-  329-355. https://doi.org/10.1901/jeab.2004.82-329
+- Falk, J. L. (1961). Production of polydipsia in normal rats by an intermittent food schedule. *Science*, *133*(3447), 195-196. https://doi.org/10.1126/science.133.3447.195
+- Falk, J. L. (1971). The nature and determinants of adjunctive behavior. *Physiology & Behavior*, *6*(5), 577-588. https://doi.org/10.1016/0031-9384(71)90209-5
+- Staddon, J. E. R., & Simmelhag, V. L. (1971). The "superstition" experiment: A reexamination of its implications for the principles of adaptive behavior. *Psychological Review*, *78*(1), 3-43. https://doi.org/10.1037/h0030305
+- Timberlake, W., & Lucas, G. A. (1985). The basis of superstitious behavior: Chance contingency, stimulus substitution, or appetitive behavior? *Journal of the Experimental Analysis of Behavior*, *44*(3), 279-299. https://doi.org/10.1901/jeab.1985.44-279
+
+## ライセンス
+
+MIT（`pyproject.toml` で宣言。リポジトリに LICENSE ファイルはありません）。
