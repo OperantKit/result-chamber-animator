@@ -15,7 +15,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from result_chamber_animator.chamber import default_two_lever_chamber
+from result_chamber_animator.chamber import (
+    Chamber,
+    SubjectStyle,
+    default_single_lever_chamber,
+    default_two_lever_chamber,
+)
 from result_chamber_animator.renderer import (
     HOPPER_KEY,
     REST_KEY,
@@ -179,6 +184,27 @@ def _load_records(path: Path) -> pd.DataFrame:
     raise SystemExit(f"unsupported input format: {path.suffix}")
 
 
+def _chamber_for(frames: list[StepFrame], subject_style: SubjectStyle) -> Chamber:
+    """Pick the default chamber whose operanda cover every pressed key.
+
+    Sessions whose responses carry no operandum (key ``lever``) get the
+    single-lever chamber; everything else gets the two-lever chamber.
+    Keys neither chamber has stop with a message naming them.
+    """
+    pressed = {f.chosen_response for f in frames} - {REST_KEY, HOPPER_KEY}
+    for chamber in (
+        default_two_lever_chamber(subject_style=subject_style),
+        default_single_lever_chamber(subject_style=subject_style),
+    ):
+        if pressed <= set(chamber.operandum_keys()):
+            return chamber
+    raise SystemExit(
+        f"operandum keys {sorted(pressed)} do not fit a default chamber; "
+        "use lever_left / lever_right (OKL operandum 0 / 1), "
+        "or lever alone (no operandum recorded)"
+    )
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="result-chamber-animator",
@@ -286,7 +312,7 @@ def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     df = _load_records(args.input)
     frames = steps_from_dataframe(df, dt=args.dt)
-    chamber = default_two_lever_chamber(subject_style=args.subject)
+    chamber = _chamber_for(frames, args.subject)
 
     import matplotlib  # noqa: E402
 

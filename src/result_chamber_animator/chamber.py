@@ -109,3 +109,20 @@ def default_two_lever_chamber(
         agent_radius=0.05,
         subject_style=subject_style,
     )
+
+
+def default_single_lever_chamber(
+    subject_style: SubjectStyle = "sphere",
+) -> Chamber:
+    """Single-lever chamber (one centred lever / hopper).
+
+    Used for sessions whose responses carry no operandum index; the one
+    lever's key is ``lever``.
+    """
+    return Chamber(
+        size=(0.30, 0.25, 0.30),
+        operanda=(Operandum(key="lever", label="", position=(0.15, 0.0, 0.15)),),
+        hopper_position=(0.15, 0.0, 0.05),
+        agent_radius=0.05,
+        subject_style=subject_style,
+    )
