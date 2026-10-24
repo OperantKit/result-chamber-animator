@@ -14,17 +14,21 @@ Notes for AI coding agents are in [AGENTS.md](AGENTS.md).
 
 ## Installation
 
-Python 3.11 or newer. result-chamber-animator is not on PyPI yet, so `pip install result-chamber-animator` does not work today. Install it from GitHub:
+
+Python 3.11 or newer. result-chamber-animator is not on PyPI yet. Install it from GitHub:
 
 ```bash
 pip install git+https://github.com/OperantKit/result-chamber-animator
 ```
 
-This is enough for CSV and JSONL input. To read OKL session logs as well, add session-recorder and the OperantKit packages it needs, without dependency resolution:
+This is enough for CSV and JSONL input. To read OKL session logs as well, add session-recorder together with the OperantKit packages it needs:
 
 ```bash
-G=git+https://github.com/OperantKit
-pip install --no-deps $G/contingency-dsl-py $G/contingency-py $G/experiment-core $G/session-recorder
+# Until the PyPI release, install from GitHub together with its OperantKit dependencies.
+pip install git+https://github.com/OperantKit/contingency-dsl-py \
+            git+https://github.com/OperantKit/contingency-py \
+            git+https://github.com/OperantKit/experiment-core \
+            git+https://github.com/OperantKit/session-recorder
 ```
 
 MP4 output needs `ffmpeg` on `PATH`.

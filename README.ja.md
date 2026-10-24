@@ -14,17 +14,21 @@ AI コーディングエージェント向けの案内は [AGENTS.md](AGENTS.md)
 
 ## インストール
 
-Python 3.11 以上が必要です。result-chamber-animator はまだ PyPI に登録されていないため、`pip install result-chamber-animator` は今のところ使えません。GitHub から入れてください。
+
+Python 3.11 以上が必要です。result-chamber-animator はまだ PyPI に登録されていません。GitHub から入れてください。
 
 ```bash
 pip install git+https://github.com/OperantKit/result-chamber-animator
 ```
 
-CSV と JSONL の入力ならこれで足ります。OKL のセッションログも読むには、session-recorder と、それが必要とする OperantKit のパッケージを、依存の解決をせずに足してください。
+CSV と JSONL の入力ならこれで足ります。OKL のセッションログも読むには、session-recorder と、それが必要とする OperantKit のパッケージを一緒に足してください。
 
 ```bash
-G=git+https://github.com/OperantKit
-pip install --no-deps $G/contingency-dsl-py $G/contingency-py $G/experiment-core $G/session-recorder
+# PyPI に公開されるまでは、OperantKit の依存と一緒に GitHub から入れる。
+pip install git+https://github.com/OperantKit/contingency-dsl-py \
+            git+https://github.com/OperantKit/contingency-py \
+            git+https://github.com/OperantKit/experiment-core \
+            git+https://github.com/OperantKit/session-recorder
 ```
 
 MP4 の出力には、`PATH` 上の `ffmpeg` が必要です。
