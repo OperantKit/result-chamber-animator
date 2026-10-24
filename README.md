@@ -63,7 +63,7 @@ Each frame places the subject at the operandum pressed on that step, and on rein
 ### Input
 
 - **CSV or JSONL** (`.csv`, `.jsonl`, `.ndjson`) with the columns `step`, `chosen_response` (`lever_left` or `lever_right` in the default two-lever chamber), and `is_reinforced`.
-- **OKL v1 session logs** (any other file whose first line is `# OKL v1`), with session-recorder installed. Each response is drawn at its operandum (0 = left lever, 1 = right lever) and counts as reinforced when a reinforcer on the same operandum follows within 50 ms; reinforcer events put the subject at the hopper.
+- **OKL v1 session logs** (any other file whose first line is `# OKL v1`), with session-recorder installed. Each response is drawn at its operandum (0 = left lever, 1 = right lever; a log whose responses record no operandum is drawn in a chamber with one lever, key `lever`) and counts as reinforced when a reinforcer on the same operandum follows within 50 ms; reinforcer events put the subject at the hopper.
 
 ### Command line
 
@@ -129,8 +129,7 @@ animate(
 
 - Replays recorded data only; it does not run a session.
 - Each recorded step or event is one frame; time between events is not drawn unless synthesized frames are turned on.
-- The chamber is a plain box with two levers and a hopper, not a model of any manufacturer's apparatus.
-- In an OKL log, responses must record their operandum. A log whose responses have no operandum stops with `KeyError: unknown operandum key 'lever'`, because the default chamber has only a left and a right lever.
+- The chamber is a plain box with two levers (or one) and a hopper, not a model of any manufacturer's apparatus.
 - MP4 output needs `ffmpeg`.
 
 ## Development
