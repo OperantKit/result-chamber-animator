@@ -28,7 +28,7 @@ CLI: `result-chamber-animator session.csv --gif session.gif` (or `--mp4 out.mp4`
 
 ## Docs
 
-- [README](https://github.com/OperantKit/result-chamber-animator/blob/main/README.md): input format, 30-second example, CLI, subject styles, inter-event behavior synthesis
+- [README](https://github.com/OperantKit/result-chamber-animator/blob/main/README.md): input format, example, CLI, subject styles, inter-event behavior synthesis
 - [AGENTS.md](https://github.com/OperantKit/result-chamber-animator/blob/main/AGENTS.md): when to use this package and what not to do
 
 ## Related packages
