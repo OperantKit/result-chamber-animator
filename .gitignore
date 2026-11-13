@@ -18,5 +18,5 @@ tmp
 docs/assets/demo.mp4
 docs/assets/demo_strict.mp4
 
-# uv is project-wide banned (behavior/CLAUDE.md, operantkit/CLAUDE.md)
+# uv is not used in this project (pip + .venv); never commit its lock file
 uv.lock
