@@ -366,8 +366,7 @@ def _expand_with_inter_event_behavior(
     timeline — a 60-s ICI gets many filler frames, while a 0.1-s
     response burst gets zero.
 
-    Phase positioning (literature-grounded; see
-    ``.local/reference/ici-behavior/``):
+    Phase positioning (literature-grounded; sources cited per phase):
 
     * **Adjunctive** — at/near the food magazine. Falk (1961, 1971);
       Schlinger et al. (2008).
