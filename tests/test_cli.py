@@ -5,8 +5,15 @@ from __future__ import annotations
 import json
 
 import pandas as pd
+import pytest
+from matplotlib import animation as mpl_animation
 
 from result_chamber_animator.cli import main
+
+needs_ffmpeg = pytest.mark.skipif(
+    not mpl_animation.writers.is_available("ffmpeg"),
+    reason="MP4 output needs ffmpeg on PATH, and ffmpeg was not found",
+)
 
 
 def _write_csv(tmp_path):
@@ -41,6 +48,7 @@ def test_cli_static_frame(tmp_path):
     assert png.stat().st_size > 0
 
 
+@needs_ffmpeg
 def test_cli_mp4_animation(tmp_path):
     csv = _write_csv(tmp_path)
     mp4 = tmp_path / "out.mp4"
@@ -57,6 +65,7 @@ def test_cli_gif_animation(tmp_path):
     assert gif.exists()
 
 
+@needs_ffmpeg
 def test_cli_jsonl_input(tmp_path):
     jsonl = _write_jsonl(tmp_path)
     mp4 = tmp_path / "out.mp4"

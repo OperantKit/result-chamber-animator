@@ -14,6 +14,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 import pytest  # noqa: E402
+from matplotlib import animation as mpl_animation  # noqa: E402
 
 from result_chamber_animator.chamber import default_two_lever_chamber  # noqa: E402
 from result_chamber_animator.renderer import (  # noqa: E402
@@ -21,6 +22,12 @@ from result_chamber_animator.renderer import (  # noqa: E402
     animate,
     render_frame,
     steps_from_dataframe,
+)
+
+
+needs_ffmpeg = pytest.mark.skipif(
+    not mpl_animation.writers.is_available("ffmpeg"),
+    reason="MP4 output needs ffmpeg on PATH, and ffmpeg was not found",
 )
 
 
@@ -80,10 +87,23 @@ class TestAnimation:
         assert isinstance(anim, FuncAnimation)
         plt.close("all")
 
+    def test_animate_mp4_without_ffmpeg_raises_clear_error(
+        self, two_step_frames, tmp_path, monkeypatch
+    ):
+        monkeypatch.setattr(
+            mpl_animation.writers, "is_available", lambda name: False
+        )
+        out = tmp_path / "demo.mp4"
+        with pytest.raises(RuntimeError, match="MP4 output needs ffmpeg on PATH"):
+            animate(two_step_frames, output_path=out, interval_ms=10, fps=5)
+        plt.close("all")
+        assert not out.exists()
+
     def test_animate_empty_frames_raises(self):
         with pytest.raises(ValueError, match="empty"):
             animate([])
 
+    @needs_ffmpeg
     def test_animate_writes_mp4(self, two_step_frames, tmp_path):
         out = tmp_path / "demo.mp4"
         animate(two_step_frames, output_path=out, interval_ms=10, fps=5)
@@ -207,6 +227,7 @@ class TestInterEventBehaviorInjection:
             else:
                 assert s.active_key == s.base.chosen_response
 
+    @needs_ffmpeg
     def test_animate_with_injection_writes_mp4(self, four_step_frames, tmp_path):
         out = tmp_path / "filled.mp4"
         animate(

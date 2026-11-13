@@ -653,7 +653,8 @@ def animate(
     output_path:
         Where to save the rendered animation. ``None`` = no save. If
         provided, must end in ``.mp4`` (FFmpeg, primary) or ``.gif``
-        (Pillow, fallback).
+        (Pillow, fallback). ``.mp4`` raises ``RuntimeError`` before
+        rendering when ``ffmpeg`` is not on ``PATH``.
     interval_ms:
         Inter-frame delay during live playback (ms).
     fps:
@@ -695,8 +696,17 @@ def animate(
         Optional RNG seed for the position jitter.
     """
     import matplotlib.pyplot as plt
-    from matplotlib.animation import FuncAnimation
+    from matplotlib.animation import FuncAnimation, writers
     from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+
+    if (
+        output_path is not None
+        and Path(output_path).suffix.lower() == ".mp4"
+        and not writers.is_available("ffmpeg")
+    ):
+        raise RuntimeError(
+            "MP4 output needs ffmpeg on PATH; use .gif or install ffmpeg"
+        )
 
     if chamber is None:
         chamber = default_two_lever_chamber()
