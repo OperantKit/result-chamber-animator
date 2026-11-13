@@ -79,7 +79,7 @@ result-chamber-animator session.csv --mp4 out.mp4 --fps 10
 result-chamber-animator session.csv --gif out.gif --fps 5
 
 # 1 ステップを静止画に
-result-chamber-animator session.csv --frame 42 --png frame42.png
+result-chamber-animator session.csv --frame 5 --png frame5.png
 
 # 既定の球の代わりにラットやハト
 result-chamber-animator session.csv --mp4 out.mp4 --subject rat

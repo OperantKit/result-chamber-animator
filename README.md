@@ -79,7 +79,7 @@ result-chamber-animator session.csv --mp4 out.mp4 --fps 10
 result-chamber-animator session.csv --gif out.gif --fps 5
 
 # One step as a still image
-result-chamber-animator session.csv --frame 42 --png frame42.png
+result-chamber-animator session.csv --frame 5 --png frame5.png
 
 # Rat or pigeon instead of the default sphere
 result-chamber-animator session.csv --mp4 out.mp4 --subject rat
