@@ -19,8 +19,8 @@ dependencies = [
 [project.optional-dependencies]
 # Reading OKL session logs (the CLI imports these when given an OKL file).
 okl = [
-    "experiment-core>=0.1.1,<0.2",
-    "session-recorder>=0.1.1,<0.2",
+    "experiment-core>=0.2,<0.3",
+    "session-recorder>=0.2,<0.3",
 ]
 test = [
     "pytest>=8",
