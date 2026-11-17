@@ -2,7 +2,7 @@
 
 :gb: [English README](README.md)
 
-result-chamber-animator は、記録済みのオペラント実験のセッションを、実験箱のアニメーションにします。被験体は各ステップで反応したオペランダム（レバー）の位置へ動き、その反応が強化されたときには餌の給餌器（ホッパー）が光ります。授業や結果の発表のための道具で、すでに記録されたデータを再生するだけです。[OperantKit](https://github.com/OperantKit) の中では、[session-recorder](https://github.com/OperantKit/session-recorder) が書くセッションログに加え、単純な CSV と JSONL のファイルを読みます。
+result-chamber-animator は、記録済みのオペラント実験のセッションを、実験箱のアニメーションにします。被験体は各ステップで反応したオペランダム (レバー) の位置へ動き、その反応が強化されたときには餌の給餌器 (ホッパー) が光ります。授業や結果の発表のための道具で、すでに記録されたデータを再生するだけです。[OperantKit](https://github.com/OperantKit) の中では、[session-recorder](https://github.com/OperantKit/session-recorder) が書くセッションログに加え、単純な CSV と JSONL のファイルを読みます。
 
 - **既定では、記録された出来事 1 つにつき 1 コマです。** 指定しない限り、何も足しません。
 - **合成したコマには、合成したことを明示します。** 任意で足せる出来事の間のコマは、強化と強化の間の行動についての公刊された説明に従うもので、データではなくモデルとして扱います。
@@ -66,8 +66,8 @@ animate(frames, output_path="session.gif", fps=4)  # GIF は ffmpeg 不要。ffm
 
 ### 入力
 
-- **CSV または JSONL**（`.csv`、`.jsonl`、`.ndjson`）。列は `step`、`chosen_response`（既定の 2 レバーの実験箱では `lever_left` か `lever_right`）、`is_reinforced` です。
-- **OKL v1 のセッションログ**（それ以外のファイルで、1 行目が `# OKL v1` のもの）。session-recorder が必要です。各反応はそのオペランダム（0 = 左レバー、1 = 右レバー。反応がオペランダムを記録していないログは、レバーが 1 本（キー `lever`）の実験箱に描きます）の位置に描かれ、同じオペランダムへの強化子が 50 ミリ秒以内に続けば強化されたものと数えます。強化子の出来事では、被験体は給餌器の位置に置かれます。
+- **CSV または JSONL**(`.csv`、`.jsonl`、`.ndjson`)。列は `step`、`chosen_response` (既定の 2 レバーの実験箱では `lever_left` か `lever_right`)、`is_reinforced` です。
+- **OKL v1 のセッションログ**(それ以外のファイルで、1 行目が `# OKL v1` のもの)。session-recorder が必要です。各反応はそのオペランダム (0 = 左レバー、1 = 右レバー。反応がオペランダムを記録していないログは、レバーが 1 本 (キー `lever`) の実験箱に描きます) の位置に描かれ、同じオペランダムへの強化子が 50 ミリ秒以内に続けば強化されたものと数えます。強化子の出来事では、被験体は給餌器の位置に置かれます。
 
 ### コマンドライン
 
@@ -96,21 +96,21 @@ result-chamber-animator session.csv --mp4 out.mp4 --subject rat --inter-event-be
 
 | `--subject` | 描くもの |
 |---|---|
-| `sphere`（既定） | 茶色の球。被験体を位置としてだけ示します |
+| `sphere` (既定) | 茶色の球。被験体を位置としてだけ示します |
 | `rat` | 真上から見たラットのシルエット：鼻先、耳、胴、尾 |
 | `pigeon` | 真上から見たハトのシルエット：くちばし、頭、胴、扇形の尾 |
 
 ### 記録された出来事の間の行動
 
-`--inter-event-behavior`（`animate` では `inject_inter_event_behavior=True`）を付けると、記録された出来事の間にコマを足し、それぞれを強化と強化の間の行動の 3 つのフェイズのどれかに割り当てます。
+`--inter-event-behavior` (`animate` では `inject_inter_event_behavior=True`) を付けると、記録された出来事の間にコマを足し、それぞれを強化と強化の間の行動の 3 つのフェイズのどれかに割り当てます。
 
 | フェイズ | いつ | 被験体を描く位置 | 文献 |
 |---|---|---|---|
-| **付随（adjunctive）** | 強化子の後 `adjunctive_window_s` 以内 | 給餌器のそば | Falk (1961, 1971) |
-| **中間（interim）** | 間隔の中ほど | 実験箱の壁に沿って歩く | Staddon & Simmelhag (1971); Timberlake & Lucas (1985) |
-| **終端（terminal）** | 次に記録された反応の前 `terminal_window_s` 以内 | これから押すオペランダムへ近づく | Staddon & Simmelhag (1971) |
+| **付随 (adjunctive)** | 強化子の後 `adjunctive_window_s` 以内 | 給餌器のそば | Falk (1961, 1971) |
+| **中間 (interim)** | 間隔の中ほど | 実験箱の壁に沿って歩く | Staddon & Simmelhag (1971); Timberlake & Lucas (1985) |
+| **終端 (terminal)** | 次に記録された反応の前 `terminal_window_s` 以内 | これから押すオペランダムへ近づく | Staddon & Simmelhag (1971) |
 
-2 つの時間窓が重なるところでは付随のフェイズを優先するため、強化子の直後の短い間隔が終端と分類されることはありません。これらのコマでは、図がわずかに（約 ±4%）伸び縮みします。
+2 つの時間窓が重なるところでは付随のフェイズを優先するため、強化子の直後の短い間隔が終端と分類されることはありません。これらのコマでは、図がわずかに (約 ±4%) 伸び縮みします。
 
 ```python
 animate(
@@ -127,13 +127,13 @@ animate(
 
 **合成したコマは、記録された出来事に対応しません。** これは出来事の間の時間のモデルであり、データの再生ではありません。給餌器が光るのは、記録上で強化されたステップだけです。アニメーションを記録と 1 対 1 で対応させる必要があるときは、このオプションをオフにしてください。
 
-[`docs/examples/demo_session.py`](docs/examples/demo_session.py) は、2 本のデモ MP4 を `docs/assets/` に書き出します。出来事の間のコマを合成したラット（12 fps）と、記録されたステップだけの球（4 fps）です。
+[`docs/examples/demo_session.py`](docs/examples/demo_session.py) は、2 本のデモ MP4 を `docs/assets/` に書き出します。出来事の間のコマを合成したラット (12 fps) と、記録されたステップだけの球 (4 fps) です。
 
 ## 制限
 
 - 記録済みのデータを再生するだけで、セッションは走らせません。
 - 記録されたステップや出来事 1 つが 1 コマです。合成したコマをオンにしない限り、出来事の間の時間は描きません。
-- 実験箱は 2 本（または 1 本）のレバーと給餌器のある単純な箱で、特定のメーカーの装置を模したものではありません。
+- 実験箱は 2 本 (または 1 本) のレバーと給餌器のある単純な箱で、特定のメーカーの装置を模したものではありません。
 - MP4 の出力には `ffmpeg` が必要です。
 
 ## 開発
