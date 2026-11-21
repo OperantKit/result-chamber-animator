@@ -140,6 +140,9 @@ animate(
 
 ```bash
 python -m venv .venv
+# Until the PyPI release, install the OperantKit dependencies from GitHub first.
+.venv/bin/python -m pip install git+https://github.com/OperantKit/contingency-dsl-py \
+                                git+https://github.com/OperantKit/contingency-py
 .venv/bin/python -m pip install -e ".[dev]"
 .venv/bin/python -m pytest
 ```
