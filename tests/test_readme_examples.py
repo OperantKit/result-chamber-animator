@@ -2,7 +2,7 @@
 
 Every ```python block of one README runs in order in a shared namespace (later
 blocks reuse the imports of earlier ones) inside a temporary directory
-(examples write files).
+(examples write files), and what it prints is compared with its comments.
 
 Every ``result-chamber-animator ...`` line of the ```bash blocks runs as a
 subprocess on ``session.csv``: the rows of the python example saved as CSV, as
@@ -12,6 +12,8 @@ the README text after the example says. Lines that write MP4 are skipped when
 
 from __future__ import annotations
 
+import contextlib
+import io
 import re
 import shlex
 import shutil
@@ -35,6 +37,31 @@ _BASH_BLOCK = re.compile(r"```bash\n(.*?)```", re.DOTALL)
 
 def _blocks(name: str) -> list[str]:
     return _BLOCK.findall((ROOT / name).read_text(encoding="utf-8"))
+
+
+def _documented_output(code: str) -> list[str]:
+    """Output lines a README block documents in the comments of its ``print`` lines."""
+
+    def clean(comment: str) -> str:
+        return comment.split(" — ")[0].rstrip()  # drop a trailing " — note"
+
+    expected: list[str] = []
+    lines = code.splitlines()
+    for i, line in enumerate(lines):
+        if not line.lstrip().startswith("print("):
+            continue
+        _, same_line, comment = line.partition("  # ")
+        if same_line:  # print(x)  # X
+            expected.append(clean(comment))
+            continue
+        for nxt in lines[i + 1 :]:  # comment lines directly below the print
+            if nxt.startswith("#  ") and expected:  # "#" + 2 spaces: continues the line above
+                expected[-1] += " " + clean(nxt[1:].strip())
+            elif nxt.startswith("# "):
+                expected.append(clean(nxt[2:]))
+            else:
+                break
+    return expected
 
 
 def _cli_lines(name: str) -> list[str]:
@@ -68,9 +95,15 @@ def _executable() -> str:
 
 @pytest.mark.parametrize("name", READMES)
 def test_readme_examples_run(name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    assert _blocks(name)
+    blocks = _blocks(name)
+    assert blocks
+    expected = [line for block in blocks for line in _documented_output(block)]
+    assert expected, f"{name} documents no output"
     monkeypatch.chdir(tmp_path)
-    _run_python_blocks(name)
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        _run_python_blocks(name)
+    assert out.getvalue().splitlines() == expected
 
 
 _CLI_CASES = [(name, line) for name in READMES for line in _cli_lines(name)]
