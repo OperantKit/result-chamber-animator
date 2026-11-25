@@ -113,3 +113,17 @@ def test_okl_without_operandum_marks_reinforced_response(tmp_path):
     responses = df[df["event_type"] == "response"]
     assert list(responses["chosen_response"]) == ["lever", "lever"]
     assert list(responses["is_reinforced"]) == [False, True]
+
+
+def test_cli_help_names_all_three_input_formats():
+    import subprocess
+    import sys
+
+    proc = subprocess.run(
+        [sys.executable, "-m", "result_chamber_animator.cli", "--help"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    for fmt in ("CSV", "JSONL", "OKL"):
+        assert fmt in proc.stdout, f"--help does not mention {fmt}"

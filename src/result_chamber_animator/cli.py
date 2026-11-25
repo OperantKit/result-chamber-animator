@@ -213,7 +213,12 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "input",
         type=Path,
-        help="Path to a CSV / JSONL recording with step / chosen_response / is_reinforced columns.",
+        help=(
+            "Path to the recording: CSV or JSONL (.csv, .jsonl, .ndjson) with the "
+            "columns step, chosen_response and is_reinforced, or an OKL v1 session "
+            "log (any other file whose first line is '# OKL v1'; needs "
+            "session-recorder installed)."
+        ),
     )
     out = p.add_mutually_exclusive_group(required=True)
     out.add_argument("--frame", type=int, help="Render a single step as a static PNG.")
